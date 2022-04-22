@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrazyBikeStore", "CrazyBikeStore\CrazyBikeStore.csproj", "{A3997013-C666-4FF4-83B9-1410FDFBB598}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrazyBikeApi", "CrazyBikeApi\CrazyBikeApi.csproj", "{A3997013-C666-4FF4-83B9-1410FDFBB598}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

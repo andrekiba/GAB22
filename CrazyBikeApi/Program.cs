@@ -1,16 +1,18 @@
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using CrazyBikeApi.Infrastructure.Middleware;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Azure.Functions.Worker.Configuration;
 
 namespace CrazyBikeApi
 {
-    public class Program
+    public static class Program
     {
         public static void Main()
         {
             var host = new HostBuilder()
-                .ConfigureFunctionsWorkerDefaults()
+                .ConfigureFunctionsWorkerDefaults(workerApplication =>
+                {
+                    // Register our custom middleware with the worker
+                    workerApplication.UseMiddleware<HelloMiddleware>();
+                })
                 .Build();
 
             host.Run();
