@@ -3,7 +3,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.Logging;
 
-namespace CrazyBikeApi.Infrastructure.Middleware
+namespace CrazyBikeStore.Infrastructure.Middleware
 {
     public class HelloMiddleware : IFunctionsWorkerMiddleware
     {
