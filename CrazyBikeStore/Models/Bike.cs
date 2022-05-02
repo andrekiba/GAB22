@@ -9,12 +9,12 @@ namespace CrazyBikeStore.Models
     public class Bike
     {
         public Guid Id { get; set; }
-        public BikeCategory Category { get; set; }
         [Required]
         public string Name { get; set; }
-        [JsonRequired]
+        public string Category { get; set; }
+        public string Vendor { get; set; }
         public List<string> PhotoUrls { get; set; } = new();
-        public List<BikeTag> Tags { get; set; }
+        public List<string> Tags { get; set; } = new();
         [OpenApiProperty(Description = "Bike status in the store")]
         public BikeStatus Status { get; set; }
     }

@@ -20,7 +20,6 @@ namespace CrazyBikeStore.Infrastructure.Middleware
             if (context.Items.TryGetValue("hello", out var value) && value is string message)
             {
                 ILogger logger = context.GetLogger<HelloMiddleware>();
-
                 logger.LogInformation("From function: {message}", message);
             }
         }
