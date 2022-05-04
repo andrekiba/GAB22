@@ -1,11 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Bogus;
 using CrazyBikeStore.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-namespace CrazyBikeStore.Infrastructure;
+
+namespace CrazyBikeStore.Infrastructure.Extensions;
 
 public static class BikeFakerExtensions
 {

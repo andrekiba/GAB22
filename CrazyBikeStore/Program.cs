@@ -1,9 +1,6 @@
-using System;
-using AutoFixture;
-using Bogus;
-using CrazyBikeStore.Infrastructure;
+using CrazyBikeStore.Infrastructure.Accessors;
+using CrazyBikeStore.Infrastructure.Extensions;
 using CrazyBikeStore.Infrastructure.Middleware;
-using CrazyBikeStore.Models;
 using Microsoft.Azure.Functions.Worker.Extensions.OpenApi.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,9 +17,14 @@ namespace CrazyBikeStore
                 .ConfigureFunctionsWorkerDefaults(worker =>
                 {
                     worker.UseNewtonsoftJson();
+                    
                     // Register our custom middleware with the worker
-                    worker.UseMiddleware<LoggingMiddleware>();
                     //worker.UseMiddleware<HelloMiddleware>();
+                    worker.UseMiddleware<FunctionContextAccessorMiddleware>();
+                    worker.UseMiddleware<LoggingMiddleware>();
+                    
+                    worker.UseMiddleware<AuthenticationMiddleware>();
+                    worker.UseMiddleware<AuthorizationMiddleware>();
                 })
                 .ConfigureLogging((context, loggingBuilder) =>
                 {
@@ -36,7 +38,12 @@ namespace CrazyBikeStore
                 .ConfigureOpenApi()
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddSingleton<Fixture>();
+                    // The accessor itself should be registered as a singleton, but the context
+                    // within the accessor will be scoped to the Function invocation
+                    services.AddSingleton<IFunctionContextAccessor, FunctionContextAccessor>();
+                    
+                    services.AddAuthorization();
+                    
                     services.AddBikeFaker(context.Configuration);
                 })
                 .Build();

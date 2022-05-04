@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using CrazyBikeStore.Infrastructure.Extensions;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.Logging;
@@ -9,12 +10,12 @@ namespace CrazyBikeStore.Infrastructure.Middleware
     {
         public async Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
         {
-            var logger = context.GetLogger<LoggingMiddleware>();
-            //do not log calls to swagger render functions
-            if (context.FunctionDefinition.Name.StartsWith("Render"))
+            //skip swagger functions
+            if (context.FunctionDefinition.EntryPoint.Contains("Microsoft.Azure.Functions.Worker.Extensions.OpenApi"))
                 await next(context);
             else
             {
+                var logger = context.GetLogger<LoggingMiddleware>();
                 logger.LogInformation($"Start executing {context.FunctionDefinition.Name}");
                 await next(context);
                 logger.LogInformation($"End of {context.FunctionDefinition.Name}");

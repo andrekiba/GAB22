@@ -3,7 +3,7 @@ using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Configurations;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.OpenApi.Models;
 
-namespace CrazyBikeStore.Infrastructure;
+namespace CrazyBikeStore.Infrastructure.Swagger;
 
 public class OpenApiConfigurationOptions : DefaultOpenApiConfigurationOptions
 {
@@ -19,6 +19,11 @@ public class OpenApiConfigurationOptions : DefaultOpenApiConfigurationOptions
             Name = "CrazyBike Store",
             Email = "info@elfo.net",
             Url = new Uri("https://www.elfo.net")
-        }
+        },
+        // License = new OpenApiLicense
+        // {
+        //     
+        // },
+        //TermsOfService = new Uri("")
     };
 }
