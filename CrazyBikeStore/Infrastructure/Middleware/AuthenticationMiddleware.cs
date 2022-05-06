@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 using CrazyBikeStore.Infrastructure.Auth;
 using CrazyBikeStore.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CrazyBikeStore.Infrastructure.Middleware
 {
@@ -45,43 +46,47 @@ namespace CrazyBikeStore.Infrastructure.Middleware
                 await next(context);
             else
             {
-                if (!TryGetTokenFromHeaders(context, out var token))
+                var authorizeAttributes = context.GetCustomAttributesOnClassAndMethod<AuthorizeAttribute>();
+                if (authorizeAttributes.Any())
                 {
-                    // Unable to get token from headers
-                    //context.SetHttpResponseStatusCode(HttpStatusCode.Unauthorized);
-                    return;
+                    if (!TryGetTokenFromHeaders(context, out var token))
+                    {
+                        // Unable to get token from headers
+                        context.SetHttpResponseStatusCode(HttpStatusCode.Unauthorized);
+                        return;
+                    }
+
+                    if (!tokenValidator.CanReadToken(token))
+                    {
+                        // Token is malformed
+                        context.SetHttpResponseStatusCode(HttpStatusCode.Unauthorized);
+                        return;
+                    }
+
+                    // Get OpenID Connect metadata
+                    var validationParameters = tokenValidationParameters.Clone();
+                    var openIdConfig = await configurationManager.GetConfigurationAsync(default);
+                    validationParameters.ValidIssuers = new List<string> { openIdConfig.Issuer };
+                    validationParameters.IssuerSigningKeys = openIdConfig.SigningKeys;
+
+                    try
+                    {
+                        // Validate token
+                        var principal = tokenValidator.ValidateToken(
+                            token, validationParameters, out _);
+
+                        // Set principal + token in Features collection
+                        // They can be accessed from here later in the call chain
+                        context.Features.Set(new JwtPrincipalFeature(principal, token));
+                    }
+                    catch (SecurityTokenException)
+                    {
+                        // Token is not valid (expired etc.)
+                        context.SetHttpResponseStatusCode(HttpStatusCode.Unauthorized);
+                    }
                 }
 
-                if (!tokenValidator.CanReadToken(token))
-                {
-                    // Token is malformed
-                    //context.SetHttpResponseStatusCode(HttpStatusCode.Unauthorized);
-                    return;
-                }
-
-                // Get OpenID Connect metadata
-                var validationParameters = tokenValidationParameters.Clone();
-                var openIdConfig = await configurationManager.GetConfigurationAsync(default);
-                validationParameters.ValidIssuers = new List<string> { openIdConfig.Issuer, $"https://sts.windows.net/{configuration["AzureAd:TenantId"]}/" };
-                validationParameters.IssuerSigningKeys = openIdConfig.SigningKeys;
-
-                try
-                {
-                    // Validate token
-                    var principal = tokenValidator.ValidateToken(
-                        token, validationParameters, out _);
-
-                    // Set principal + token in Features collection
-                    // They can be accessed from here later in the call chain
-                    context.Features.Set(new JwtPrincipalFeature(principal, token));
-
-                    await next(context);
-                }
-                catch (SecurityTokenException)
-                {
-                    // Token is not valid (expired etc.)
-                    context.SetHttpResponseStatusCode(HttpStatusCode.Unauthorized);
-                }
+                await next(context);
             }
         }
         

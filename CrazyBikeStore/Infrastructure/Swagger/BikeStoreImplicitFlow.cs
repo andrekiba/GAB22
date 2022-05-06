@@ -11,13 +11,18 @@ public class BikeStoreImplicitFlow : OpenApiOAuthSecurityFlows
     public BikeStoreImplicitFlow()
     {
         var tenantId = Environment.GetEnvironmentVariable("OpenApi__Auth__TenantId");
+        var audience = Environment.GetEnvironmentVariable("OpenApi__Auth__Audience");
         
         Implicit = new OpenApiOAuthFlow
         {
             AuthorizationUrl = new Uri(string.Format(AuthUrl, tenantId)),
             RefreshUrl = new Uri(string.Format(RefreshUrl, tenantId)),
-
-            Scopes = { { "https://graph.microsoft.com/.default", "Default scope defined in the app" } }
+            Scopes =
+            {
+                //{"https://graph.microsoft.com/.default", "Default scope defined in the app"},
+                {$"api://{audience}/Bikes.Read","Bikes.Read"},
+                {$"api://{audience}/Bikes.Write","Bikes.Write"}
+            }
         };
     }
 }

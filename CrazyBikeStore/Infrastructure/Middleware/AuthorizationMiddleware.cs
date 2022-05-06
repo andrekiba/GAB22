@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using CrazyBikeStore.Infrastructure.Auth;
@@ -29,8 +28,7 @@ namespace CrazyBikeStore.Infrastructure.Middleware
             else
             {
                 var principalFeature = context.Features.Get<JwtPrincipalFeature>();
-                var targetMethod = context.GetTargetFunctionMethod();
-                var authorizeAttributes = GetCustomAttributesOnClassAndMethod<AuthorizeAttribute>(targetMethod);
+                var authorizeAttributes = context.GetCustomAttributesOnClassAndMethod<AuthorizeAttribute>();
                 
                 if (authorizeAttributes.Any())
                 {
@@ -39,7 +37,7 @@ namespace CrazyBikeStore.Infrastructure.Middleware
                         //[Authorize]
                         if (string.IsNullOrEmpty(authorizeAttribute.Policy) && string.IsNullOrEmpty(authorizeAttribute.Roles))
                         {
-                            if (!await AuthorizedForAuthenticated(principalFeature?.Principal))
+                            if (!await CheckAuthenticated(principalFeature?.Principal))
                             {
                                 context.SetHttpResponseStatusCode(HttpStatusCode.Unauthorized);
                                 return;
@@ -51,7 +49,7 @@ namespace CrazyBikeStore.Infrastructure.Middleware
                         {
                             if (principalFeature?.Principal != null)
                             {
-                                if (!await AuthorizedForRoles(authorizeAttribute?.Roles, principalFeature?.Principal))
+                                if (!await CheckRoles(authorizeAttribute?.Roles, principalFeature?.Principal))
                                 {
                                     context.SetHttpResponseStatusCode(HttpStatusCode.Forbidden);
                                     return;
@@ -70,7 +68,7 @@ namespace CrazyBikeStore.Infrastructure.Middleware
                         {
                             if (principalFeature?.Principal != null)
                             {
-                                if (!await AuthorizedForPolicy(authorizeAttribute.Policy, principalFeature?.Principal))
+                                if (!await CheckPolicy(authorizeAttribute.Policy, principalFeature.Principal))
                                 {
                                     context.SetHttpResponseStatusCode(HttpStatusCode.Forbidden);
                                     return;
@@ -89,15 +87,15 @@ namespace CrazyBikeStore.Infrastructure.Middleware
             }
         }
         
-        async Task<bool> AuthorizedForAuthenticated(ClaimsPrincipal claimsPrincipal, List<string> authenticationSchemes = null)
+        async Task<bool> CheckAuthenticated(ClaimsPrincipal claimsPrincipal, IList<string> authenticationSchemes = null)
         {
             if (claimsPrincipal == null)
                 return false;
 
-            var rolesResult = await authorizationService.AuthorizeAsync(claimsPrincipal, RequireAuthenticatedUserPolicy(authenticationSchemes));
-            return rolesResult.Succeeded;
+            var authResult = await authorizationService.AuthorizeAsync(claimsPrincipal, RequireAuthenticatedUserPolicy(authenticationSchemes));
+            return authResult.Succeeded;
         }
-        async Task<bool> AuthorizedForRoles(string rolesString, ClaimsPrincipal claimsPrincipal, List<string> authenticationSchemes = null)
+        async Task<bool> CheckRoles(string rolesString, ClaimsPrincipal claimsPrincipal, IList<string> authenticationSchemes = null)
         {
             if (string.IsNullOrEmpty(rolesString))
                 throw new ArgumentNullException(nameof(rolesString));
@@ -105,10 +103,10 @@ namespace CrazyBikeStore.Infrastructure.Middleware
             if (claimsPrincipal == null)
                 return false;
             
-            var rolesResult = await authorizationService.AuthorizeAsync(claimsPrincipal, RequireRoles(rolesString.Split(","), authenticationSchemes));
-            return rolesResult.Succeeded;
+            var authResult = await authorizationService.AuthorizeAsync(claimsPrincipal, RequireRolesPolicy(rolesString.Split(","), authenticationSchemes));
+            return authResult.Succeeded;
         }
-        async Task<bool> AuthorizedForPolicy(string policy, ClaimsPrincipal claimsPrincipal)
+        async Task<bool> CheckPolicy(string policy, ClaimsPrincipal claimsPrincipal)
         {
             if (string.IsNullOrEmpty(policy))
                 throw new ArgumentNullException(nameof(policy));
@@ -116,11 +114,11 @@ namespace CrazyBikeStore.Infrastructure.Middleware
             if (claimsPrincipal == null)
                 return false;
 
-            var rolesResult = await authorizationService.AuthorizeAsync(claimsPrincipal, policy);
-            return rolesResult.Succeeded;
+            var authResult = await authorizationService.AuthorizeAsync(claimsPrincipal, policy);
+            return authResult.Succeeded;
         }
         
-        static AuthorizationPolicy RequireRoles(string[] roles, IList<string> authenticationSchemes = null)
+        static AuthorizationPolicy RequireRolesPolicy(string[] roles, IList<string> authenticationSchemes = null)
         {
             var authPolicyBuilder = new AuthorizationPolicyBuilder().RequireRole(roles);
             if (authenticationSchemes != null) authPolicyBuilder.AuthenticationSchemes = authenticationSchemes;
@@ -131,14 +129,6 @@ namespace CrazyBikeStore.Infrastructure.Middleware
             var authPolicyBuilder = new AuthorizationPolicyBuilder().RequireAuthenticatedUser();
             if (authenticationSchemes != null) authPolicyBuilder.AuthenticationSchemes = authenticationSchemes;
             return authPolicyBuilder.Build();
-        }
-        
-        static List<T> GetCustomAttributesOnClassAndMethod<T>(MethodInfo targetMethod) where T : Attribute
-        {
-            var methodAttributes = targetMethod.GetCustomAttributes<T>();
-            var classAttributes = targetMethod.DeclaringType.GetCustomAttributes<T>();
-            var mAttributes = methodAttributes as T[] ?? methodAttributes.ToArray();
-            return mAttributes.Any() ? mAttributes.ToList() : classAttributes.ToList();
         }
     }
 }

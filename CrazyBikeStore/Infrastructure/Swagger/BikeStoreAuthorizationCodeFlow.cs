@@ -12,14 +12,18 @@ public class BikeStoreAuthorizationCodeFlow : OpenApiOAuthSecurityFlows
     public BikeStoreAuthorizationCodeFlow()
     {
         var tenantId = Environment.GetEnvironmentVariable("OpenApi__Auth__TenantId");
+        var audience = Environment.GetEnvironmentVariable("OpenApi__Auth__Audience");
         
         AuthorizationCode = new OpenApiOAuthFlow
         {
             AuthorizationUrl = new Uri(string.Format(AuthUrl, tenantId)),
             TokenUrl = new Uri(string.Format(TokenUrl, tenantId)),
             RefreshUrl = new Uri(string.Format(RefreshUrl, tenantId)),
-
-            Scopes = { { "https://graph.microsoft.com/.default", "Default scope defined in the app" } }
+            Scopes =
+            {
+                {$"api://{audience}/Bikes.Read","Bikes.Read"},
+                {$"api://{audience}/Bikes.Write","Bikes.Write"}
+            }
         };
     }
 }

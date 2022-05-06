@@ -1,3 +1,4 @@
+using System.Linq;
 using CrazyBikeStore.Infrastructure.Accessors;
 using CrazyBikeStore.Infrastructure.Extensions;
 using CrazyBikeStore.Infrastructure.Middleware;
@@ -42,7 +43,24 @@ namespace CrazyBikeStore
                     // within the accessor will be scoped to the Function invocation
                     services.AddSingleton<IFunctionContextAccessor, FunctionContextAccessor>();
                     
-                    services.AddAuthorization();
+                    services.AddAuthorization(options =>
+                    {
+                        const string scopeClaimType = "http://schemas.microsoft.com/identity/claims/scope";
+                        
+                        options.AddPolicy("BikeReader", policy =>
+                            policy.RequireAssertion(authContext =>
+                            
+                                authContext.User.HasClaim(c => c.Type == scopeClaimType) &&
+                                authContext.User.Claims.Single(c => c.Type == scopeClaimType).Value.Contains("Bikes.Read")
+                            ));
+                        
+                        options.AddPolicy("BikeWriter", policy =>
+                            policy.RequireAssertion(authContext =>
+                            
+                                authContext.User.HasClaim(c => c.Type == scopeClaimType) &&
+                                authContext.User.Claims.Single(c => c.Type == scopeClaimType).Value.Contains("Bikes.Writer")
+                            ));
+                    });
                     
                     services.AddBikeFaker(context.Configuration);
                 })

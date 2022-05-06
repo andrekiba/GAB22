@@ -39,6 +39,15 @@ namespace CrazyBikeStore.Infrastructure.Extensions
             return method;
         }
         
+        public static List<T> GetCustomAttributesOnClassAndMethod<T>(this FunctionContext context) where T : Attribute
+        {
+            var targetMethod = context.GetTargetFunctionMethod();
+            var methodAttributes = targetMethod.GetCustomAttributes<T>();
+            var classAttributes = targetMethod.DeclaringType.GetCustomAttributes<T>();
+            var mAttributes = methodAttributes as T[] ?? methodAttributes.ToArray();
+            return mAttributes.Any() ? mAttributes.ToList() : classAttributes.ToList();
+        }
+        
         //Thanks https://github.com/Azure/azure-functions-dotnet-worker/issues/414#issuecomment-872818004
         public static HttpRequestData GetHttpRequestData(this FunctionContext functionContext)
         {
