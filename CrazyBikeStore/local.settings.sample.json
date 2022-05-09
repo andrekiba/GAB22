@@ -12,6 +12,7 @@
     "OpenApi__DocTitle": "CrazyBike Store API",
     "OpenApi__DocVersion": "1.0.0",
     "OpenApi__ForceHttps": false,
-    "OpenApi__Auth__TenantId": "your-aad-tenant-id"
+    "OpenApi__Auth__TenantId": "your-aad-tenant-id",
+    "OpenApi__Auth__Audience": "your-aad-app-id"
   }
 }
